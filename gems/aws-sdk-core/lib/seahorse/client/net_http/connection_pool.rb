@@ -261,12 +261,25 @@ module Seahorse
         # Extract the parts of the http_proxy URI
         # @return [Array(String)]
         def http_proxy_parts
-          return [
+          parts = [
             http_proxy.host,
             http_proxy.port,
             (http_proxy.user && CGI::unescape(http_proxy.user)),
-            (http_proxy.password && CGI::unescape(http_proxy.password))
+            (http_proxy.password && CGI::unescape(http_proxy.password)),
           ]
+
+          if http_proxy.scheme == 'https'
+            # Support for https proxies was added in Ruby 3.4
+            # https://bugs.ruby-lang.org/issues/16482
+            # https://github.com/ruby/net-http/pull/55
+            # Only set when needed for reverse compatibility with older Ruby versions
+            parts += [
+              nil, # p_no_proxy
+              true # p_use_ssl
+            ]
+          end
+
+          return parts
         end
 
         # Starts and returns a new HTTP(S) session.
@@ -281,7 +294,16 @@ module Seahorse
           args << endpoint.port
           args += http_proxy_parts
 
-          http = ExtendedSession.new(Net::HTTP.new(*args.compact))
+          begin
+            http = ExtendedSession.new(Net::HTTP.new(*args))
+          rescue ArgumentError => exc
+            raise exc unless exc.to_s[0..24] == 'wrong number of arguments' && http_proxy_parts.length > 4
+
+            # Exception is more-than-likely due to passing a https proxy when using a version of Ruby stdlib that doesn't support it.
+            # Raise a actionable error.
+            raise ArgumentError, 'Invalid Configuration: Current Ruby version does not support HTTPS proxies'
+          end
+
           http.set_debug_output(logger) if http_wire_trace?
           http.open_timeout = http_open_timeout
           http.keep_alive_timeout = http_idle_timeout if http.respond_to?(:keep_alive_timeout=)

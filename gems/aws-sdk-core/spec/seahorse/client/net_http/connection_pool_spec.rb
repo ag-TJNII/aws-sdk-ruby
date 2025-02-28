@@ -24,6 +24,12 @@ module Seahorse
             pool = described_class.new(:http_proxy => http_proxy)
             expect(pool.send(:http_proxy_parts)).to eq ["proxy.com", 8080, ":@/username", "password:@/"]
           end
+
+          it "with a HTTPS URI" do
+            http_proxy = URI.parse('https://proxy.com:8080')
+            pool = described_class.new(:http_proxy => http_proxy)
+            expect(pool.send(:http_proxy_parts)).to eq ["proxy.com", 8080, nil, nil, nil, true]
+          end
         end
 
         describe ".for" do

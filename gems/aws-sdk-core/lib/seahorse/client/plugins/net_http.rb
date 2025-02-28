@@ -8,7 +8,7 @@ module Seahorse
       class NetHttp < Plugin
 
         option(:http_proxy, default: nil, doc_type: "URI::HTTP,String", docstring: <<-DOCS)
-A proxy to send requests through.  Formatted like 'http://proxy.com:123'.
+A proxy to send requests through.  Formatted like 'http://proxy.com:123'.  HTTPS URIs supported with Ruby >= 3.4.
         DOCS
 
         option(:http_open_timeout, default: 15, doc_type: Float, docstring: <<-DOCS) do |cfg|

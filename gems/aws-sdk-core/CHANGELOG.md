@@ -1,6 +1,8 @@
 Unreleased Changes
 ------------------
 
+* Feature - Added support for HTTPS proxies
+
 3.219.0 (2025-02-18)
 ------------------
 
